@@ -5,190 +5,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Familien Einkaufsliste</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f9f9f9;
-            color: #333;
-            margin: 0;
-            padding: 0;
-        }
-        header, footer {
-            background-color: #4CAF50;
-            color: white;
-            text-align: center;
-            padding: 10px 0;
-        }
-        main {
-            padding: 20px;
-        }
-        #login, #register, #list {
-            max-width: 400px;
-            margin: 0 auto;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background: white;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        h2 {
-            text-align: center;
-        }
-        input, button {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        ul li {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 10px;
-            margin: 5px 0;
-            background: #f1f1f1;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        ul li button {
-            width: auto;
-            background-color: #e74c3c;
-        }
+        body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 20px; }
+        ul { list-style-type: none; padding: 0; }
+        li { background: #f1f1f1; margin: 10px 0; padding: 10px; border-radius: 5px; display: flex; justify-content: space-between; }
+        button { padding: 5px 10px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #45a049; }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Familien Einkaufsliste</h1>
-    </header>
-    <main>
-        <!-- Login Form -->
-        <div id="login">
-            <h2>Anmelden</h2>
-            <input type="text" id="loginName" placeholder="Name" required>
-            <input type="password" id="loginPassword" placeholder="Passwort" required>
-            <button onclick="login()">Anmelden</button>
-            <p>Noch kein Konto? <a href="#" onclick="showRegister()">Registrieren</a></p>
-        </div>
+    <h1>Einkaufsliste für Familie Kopf</h1>
+    <h3>Willkommen! Füge Artikel hinzu:</h3>
+    <input type="text" id="newItem" placeholder="Neuer Artikel">
+    <button onclick="addItem()">Hinzufügen</button>
+    <ul id="shoppingList"></ul>
 
-        <!-- Register Form -->
-        <div id="register" style="display: none;">
-            <h2>Registrieren</h2>
-            <input type="text" id="registerName" placeholder="Name" required>
-            <input type="password" id="registerPassword" placeholder="Passwort" required>
-            <button onclick="register()">Registrieren</button>
-            <p>Schon ein Konto? <a href="#" onclick="showLogin()">Anmelden</a></p>
-        </div>
-
-        <!-- Einkaufsliste -->
-        <div id="list" style="display: none;">
-            <h2>Was benötigt wird</h2>
-            <ul id="shoppingList"></ul>
-            <input type="text" id="newItem" placeholder="Neuer Artikel">
-            <button onclick="addItem()">Hinzufügen</button>
-            <button onclick="logout()" style="background-color: #e74c3c;">Abmelden</button>
-        </div>
-    </main>
-    <footer>
-        <p>&copy; 2025 Familie Kopf</p>
-    </footer>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-database.js"></script>
 
     <script>
-        // Speicher für Benutzer und Einkaufsliste
-        let users = JSON.parse(localStorage.getItem("users")) || {};
-        let currentUser = null;
+        // Firebase-Konfiguration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAFVS_tiUUPD-0afT3NheQ6w1SxrooZ3Y4",
+            authDomain: "familien-einkaufsliste.firebaseapp.com",
+            databaseURL: "https://familien-einkaufsliste-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "familien-einkaufsliste",
+            storageBucket: "familien-einkaufsliste.firebasestorage.app",
+            messagingSenderId: "849652238686",
+            appId: "1:849652238686:web:610a2445392acebb3767cf"
+        };
 
-        function showRegister() {
-            document.getElementById("login").style.display = "none";
-            document.getElementById("register").style.display = "block";
-        }
+        // Firebase initialisieren
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
-        function showLogin() {
-            document.getElementById("register").style.display = "none";
-            document.getElementById("login").style.display = "block";
-        }
-
-        function register() {
-            const name = document.getElementById("registerName").value;
-            const password = document.getElementById("registerPassword").value;
-            if (name && password) {
-                if (!users[name]) {
-                    users[name] = { password: password, list: [] };
-                    localStorage.setItem("users", JSON.stringify(users));
-                    alert("Registrierung erfolgreich!");
-                    showLogin();
-                } else {
-                    alert("Benutzername existiert bereits.");
-                }
-            } else {
-                alert("Bitte alle Felder ausfüllen.");
-            }
-        }
-
-        function login() {
-            const name = document.getElementById("loginName").value;
-            const password = document.getElementById("loginPassword").value;
-            if (users[name] && users[name].password === password) {
-                currentUser = name;
-                loadList();
-                document.getElementById("login").style.display = "none";
-                document.getElementById("list").style.display = "block";
-            } else {
-                alert("Ungültiger Benutzername oder Passwort.");
-            }
-        }
-
-        function logout() {
-            currentUser = null;
-            document.getElementById("list").style.display = "none";
-            document.getElementById("login").style.display = "block";
-        }
-
-        function loadList() {
-            const list = users[currentUser].list;
-            const shoppingList = document.getElementById("shoppingList");
-            shoppingList.innerHTML = "";
-            list.forEach((item, index) => {
-                const li = document.createElement("li");
-                li.textContent = item;
-                const removeButton = document.createElement("button");
-                removeButton.textContent = "Entfernen";
-                removeButton.onclick = () => removeItem(index);
-                li.appendChild(removeButton);
-                shoppingList.appendChild(li);
-            });
-        }
-
+        // Artikel hinzufügen
         function addItem() {
             const newItem = document.getElementById("newItem").value;
             if (newItem) {
-                users[currentUser].list.push(newItem);
-                localStorage.setItem("users", JSON.stringify(users));
+                database.ref('shoppingList').push(newItem);
                 document.getElementById("newItem").value = "";
-                loadList();
             } else {
                 alert("Bitte einen Artikel eingeben.");
             }
         }
 
-        function removeItem(index) {
-            users[currentUser].list.splice(index, 1);
-            localStorage.setItem("users", JSON.stringify(users));
-            loadList();
-        }
+        // Liste abrufen und anzeigen
+        database.ref('shoppingList').on('value', (snapshot) => {
+            const shoppingList = document.getElementById("shoppingList");
+            shoppingList.innerHTML = "";
+            snapshot.forEach((childSnapshot) => {
+                const item = childSnapshot.val();
+                const key = childSnapshot.key;
+                const li = document.createElement("li");
+                li.textContent = item;
+                const removeButton = document.createElement("button");
+                removeButton.textContent = "Entfernen";
+                removeButton.onclick = () => database.ref('shoppingList/' + key).remove();
+                li.appendChild(removeButton);
+                shoppingList.appendChild(li);
+            });
+        });
     </script>
 </body>
 </html>
-
