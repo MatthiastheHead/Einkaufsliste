@@ -43,7 +43,9 @@
         function addItem() {
             const newItem = document.getElementById("newItem").value;
             if (newItem) {
-                database.ref('shoppingList').push(newItem);
+                database.ref('shoppingList').push(newItem)
+                    .then(() => console.log("Artikel erfolgreich hinzugefügt"))
+                    .catch((error) => console.error("Fehler beim Hinzufügen:", error));
                 document.getElementById("newItem").value = "";
             } else {
                 alert("Bitte einen Artikel eingeben.");
